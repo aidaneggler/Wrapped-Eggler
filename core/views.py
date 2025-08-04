@@ -4,11 +4,16 @@ from django.conf import settings
 from django.shortcuts import render, redirect
 from django.urls import reverse
 import time
+import pandas as pd
+from collections import Counter
+
+# ==============================================================================
+# Helper Functions
+# These functions help keep the main view logic clean.
+# ==============================================================================
 
 def get_spotify_oauth():
-    """
-    Helper function to get a SpotifyOAuth instance.
-    """
+    """Helper function to get a SpotifyOAuth instance."""
     return SpotifyOAuth(
         client_id=settings.SPOTIPY_CLIENT_ID,
         client_secret=settings.SPOTIPY_CLIENT_SECRET,
@@ -16,83 +21,120 @@ def get_spotify_oauth():
         scope=settings.SPOTIPY_SCOPE
     )
 
-def login(request):
+def get_spotify_client(request):
     """
-    Redirects the user to the Spotify authorization page.
-    """
-    sp_oauth = get_spotify_oauth()
-    auth_url = sp_oauth.get_authorize_url()
-    return redirect(auth_url)
-
-def logout(request):
-    """
-    Logs the user out by clearing the session.
-    """
-    if 'token_info' in request.session:
-        del request.session['token_info']
-    return redirect(reverse('index'))
-
-
-def callback(request):
-    """
-    Handles the callback from Spotify after the user has authenticated.
-    The authorization code is exchanged for an access token.
-    """
-    sp_oauth = get_spotify_oauth()
-    # The user is redirected back with a 'code' query parameter
-    code = request.GET.get('code')
-    
-    # Exchange the code for an access token
-    token_info = sp_oauth.get_access_token(code)
-
-    # Save the token info in the session.
-    # We also add an 'expires_at' timestamp to manage token expiration.
-    token_info['expires_at'] = int(time.time()) + token_info['expires_in']
-    request.session['token_info'] = token_info
-
-    return redirect(reverse('results'))
-
-def index(request):
-    """
-    Renders the home page. If the user is already logged in,
-    it will show a link to the results and a logout button.
-    """
-    return render(request, 'spotify_wrapped_app/index.html')
-
-def results(request):
-    """
-    Fetches and displays the user's Spotify data.
+    Helper function to get an authenticated Spotify client.
+    It handles token checking, expiration, and refreshing.
     """
     token_info = request.session.get('token_info', None)
-
-    # If no token, redirect to login
     if not token_info:
-        return redirect(reverse('login'))
+        return None
 
-    # Check if token is expired
     now = int(time.time())
     is_expired = token_info.get('expires_at', 0) < now
-
     if is_expired:
         sp_oauth = get_spotify_oauth()
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         token_info['expires_at'] = int(time.time()) + token_info['expires_in']
         request.session['token_info'] = token_info
 
-    try:
-        # Create a Spotify client with the access token
-        sp = spotipy.Spotify(auth=token_info['access_token'])
+    return spotipy.Spotify(auth=token_info['access_token'])
 
-        # Fetch user's top artists and tracks
-        top_artists = sp.current_user_top_artists(limit=10, time_range='medium_term')
-        top_tracks = sp.current_user_top_tracks(limit=10, time_range='medium_term')
-        
-        context = {
-            'top_artists': top_artists['items'],
-            'top_tracks': top_tracks['items'],
-        }
-        return render(request, 'spotify_wrapped_app/results.html', context)
+# ==============================================================================
+# Authentication Views
+# These views handle the login, logout, and callback flow.
+# ==============================================================================
 
-    except spotipy.SpotifyException as e:
-        # Handle potential errors, e.g., token revoked
-        return redirect(reverse('logout'))
+def login(request):
+    """Redirects the user to the Spotify authorization page."""
+    sp_oauth = get_spotify_oauth()
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url)
+
+def logout(request):
+    """Logs the user out by clearing the session."""
+    if 'token_info' in request.session:
+        del request.session['token_info']
+    return redirect(reverse('index'))
+
+def callback(request):
+    """Handles the callback from Spotify after the user has authenticated."""
+    sp_oauth = get_spotify_oauth()
+    code = request.GET.get('code')
+    token_info = sp_oauth.get_access_token(code)
+    token_info['expires_at'] = int(time.time()) + token_info['expires_in']
+    request.session['token_info'] = token_info
+    return redirect(reverse('dashboard'))
+
+# ==============================================================================
+# Page Views
+# These views render the actual pages of the application.
+# ==============================================================================
+
+def index(request):
+    """Renders the home page."""
+    return render(request, 'spotify_wrapped_app/index.html')
+
+def dashboard(request):
+    """Renders the main dashboard page with links to feature pages."""
+    if not request.session.get('token_info'):
+        return redirect('login')
+    return render(request, 'spotify_wrapped_app/dashboard.html')
+
+def top_artists_view(request):
+    """Fetches and displays the user's top 10 artists."""
+    sp = get_spotify_client(request)
+    if not sp:
+        return redirect('login')
+    
+    top_artists = sp.current_user_top_artists(limit=10, time_range='medium_term')
+    context = {'top_artists': top_artists['items']}
+    return render(request, 'spotify_wrapped_app/top_artists.html', context)
+
+def top_tracks_view(request):
+    """Fetches and displays the user's top 10 tracks."""
+    sp = get_spotify_client(request)
+    if not sp:
+        return redirect('login')
+
+    top_tracks = sp.current_user_top_tracks(limit=10, time_range='medium_term')
+    context = {'top_tracks': top_tracks['items']}
+    return render(request, 'spotify_wrapped_app/top_tracks.html', context)
+
+def top_genres_view(request):
+    """Analyzes and displays the user's top genres."""
+    sp = get_spotify_client(request)
+    if not sp:
+        return redirect('login')
+
+    top_artists = sp.current_user_top_artists(limit=50, time_range='medium_term')
+    all_genres = [genre for artist in top_artists['items'] for genre in artist['genres']]
+    genre_counts = Counter(all_genres)
+    top_genres = genre_counts.most_common(10)
+    
+    context = {'top_genres': top_genres}
+    return render(request, 'spotify_wrapped_app/top_genres.html', context)
+
+def audio_vibe_view(request):
+    """Analyzes and displays the audio features of the user's top tracks."""
+    sp = get_spotify_client(request)
+    if not sp:
+        return redirect('login')
+
+    top_tracks = sp.current_user_top_tracks(limit=20, time_range='medium_term')
+    track_ids = [track['id'] for track in top_tracks['items']]
+    
+    audio_features = sp.audio_features(track_ids)
+    df = pd.DataFrame(audio_features)
+    
+    # Calculate averages and format for Chart.js
+    vibe_analysis = {
+        'danceability': round(df['danceability'].mean() * 100),
+        'energy': round(df['energy'].mean() * 100),
+        'valence': round(df['valence'].mean() * 100),
+        'acousticness': round(df['acousticness'].mean() * 100),
+        'speechiness': round(df['speechiness'].mean() * 100),
+    }
+
+    context = {'vibe_analysis': vibe_analysis}
+    return render(request, 'spotify_wrapped_app/audio_vibe.html', context)

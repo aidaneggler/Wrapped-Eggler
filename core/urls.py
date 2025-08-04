@@ -4,18 +4,17 @@ from . import views
 # This is where you define the URL patterns for your app.
 # Each path maps a URL to a specific view function from views.py.
 urlpatterns = [
-    # e.g., http://127.0.0.1:8000/
     path('', views.index, name='index'),
-    
-    # e.g., http://127.0.0.1:8000/login/
     path('login/', views.login, name='login'),
-    
-    # e.g., http://127.0.0.1:8000/logout/
     path('logout/', views.logout, name='logout'),
-    
-    # e.g., http://127.0.0.1:8000/callback/
     path('callback/', views.callback, name='callback'),
     
-    # e.g., http://127.0.0.1:8000/results/
-    path('results/', views.results, name='results'),
+    # Main dashboard
+    path('dashboard/', views.dashboard, name='dashboard'),
+    
+    # Feature pages
+    path('top-artists/', views.top_artists_view, name='top_artists'),
+    path('top-tracks/', views.top_tracks_view, name='top_tracks'),
+    path('top-genres/', views.top_genres_view, name='top_genres'),
+    path('audio-vibe/', views.audio_vibe_view, name='audio_vibe'),
 ]
