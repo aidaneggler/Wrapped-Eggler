@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 import time
 import pandas as pd
-from collections import Counter
+from collections import Counter, defaultdict
 
 # ==============================================================================
 # Helper Functions
@@ -91,28 +91,63 @@ def top_artists_view(request):
     context = {'top_artists': top_artists['items']}
     return render(request, 'spotify_wrapped_app/top_artists.html', context)
 
-def top_tracks_view(request):
+def top_tracks_view(request, time_range='medium term'):
     """Fetches and displays the user's top 10 tracks."""
     sp = get_spotify_client(request)
     if not sp:
         return redirect('login')
 
-    top_tracks = sp.current_user_top_tracks(limit=10, time_range='medium_term')
-    context = {'top_tracks': top_tracks['items']}
+    valid_time_ranges = ['short_term', 'medium_term', 'long_term']
+    if time_range not in valid_time_ranges:
+        time_range = 'medium term'
+    
+    top_tracks = sp.current_user_top_tracks(limit=10, time_range=time_range)
+    context = {
+        'top_tracks': top_tracks['items'],
+        'activate_time_range': time_range}
     return render(request, 'spotify_wrapped_app/top_tracks.html', context)
 
 def top_genres_view(request):
-    """Analyzes and displays the user's top genres."""
+    """
+    Analyzes and displays the user's top genres based on listening time
+    from their top 50 tracks.
+    """
     sp = get_spotify_client(request)
     if not sp:
         return redirect('login')
 
-    top_artists = sp.current_user_top_artists(limit=50, time_range='medium_term')
-    all_genres = [genre for artist in top_artists['items'] for genre in artist['genres']]
-    genre_counts = Counter(all_genres)
-    top_genres = genre_counts.most_common(10)
+    top_tracks = sp.current_user_top_tracks(limit=50, time_range='medium_term')['items']
+    if not top_tracks:
+        context = {'genre_labels': [], 'genre_data': []}
+        return render(request, 'spotify_wrapped_app/top_genres.html', context)
+
+    artist_ids = list({artist['id'] for track in top_tracks for artist in track['artists']})
     
-    context = {'top_genres': top_genres}
+    # FIX: Chunk artist IDs into groups of 50 to respect API limits
+    artist_chunks = [artist_ids[i:i + 50] for i in range(0, len(artist_ids), 50)]
+    
+    artists_details = []
+    for chunk in artist_chunks:
+        artists_details.extend(sp.artists(chunk)['artists'])
+    
+    artist_genre_map = {artist['id']: artist['genres'] for artist in artists_details}
+    
+    genre_durations = defaultdict(float)
+    for track in top_tracks:
+        duration_minutes = track['duration_ms'] / 60000
+        for artist in track['artists']:
+            for genre in artist_genre_map.get(artist['id'], []):
+                genre_durations[genre] += duration_minutes
+
+    sorted_genres = sorted(genre_durations.items(), key=lambda item: item[1], reverse=True)[:10]
+
+    genre_labels = [genre.capitalize() for genre, duration in sorted_genres]
+    genre_data = [round(duration) for genre, duration in sorted_genres]
+
+    context = {
+        'genre_labels': genre_labels,
+        'genre_data': genre_data,
+    }
     return render(request, 'spotify_wrapped_app/top_genres.html', context)
 
 def audio_vibe_view(request):

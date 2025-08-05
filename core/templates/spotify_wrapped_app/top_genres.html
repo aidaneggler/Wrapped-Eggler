@@ -1,4 +1,4 @@
-{% load static %}<!-- This tag is required to use the {% static %} template tag -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -28,18 +28,20 @@
             <h2 class="text-4xl font-bold mb-8 text-center">Your Top Genres by Listening Time</h2>
             <div class="bg-gray-800 p-6 rounded-lg">
                 {% if genre_labels %}
-                <!-- 
-                        The data from Django is now stored in these data-* attributes.
-                        The 'json_script' filter safely converts the Python list to a JSON string.
-                    -->
-                <canvas id="genresChart" data-labels="{{ genre_labels|safe }}"
-                    data-data="{{ genre_data|safe }}"></canvas>
+                <canvas id="genresChart"></canvas>
                 {% else %}
                 <p class="text-center text-gray-400">Could not determine your top genres.</p>
                 {% endif %}
             </div>
         </div>
     </div>
+
+    <!-- 
+        The json_script filter safely converts the Django context variables
+        into JSON and places them inside <script> tags with the given IDs.
+    -->
+    {{ genre_labels|json_script:"genre-labels" }}
+    {{ genre_data|json_script:"genre-data" }}
 
     <!-- Load the external JavaScript file -->
     <script src="{% static 'core/js/genres_chart.js' %}"></script>

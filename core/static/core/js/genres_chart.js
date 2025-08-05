@@ -8,10 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Retrieve the genre data from the canvas's data-* attributes.
-    // JSON.parse() is used to convert the string back into a JavaScript array.
-    const genreLabels = JSON.parse(canvas.dataset.labels);
-    const genreData = JSON.parse(canvas.dataset.data);
+    // Retrieve the data from the <script> tags created by json_script.
+    const genreLabels = JSON.parse(document.getElementById('genre-labels').textContent);
+    const genreData = JSON.parse(document.getElementById('genre-data').textContent);
 
     // Get the 2D rendering context for the canvas.
     const ctx = canvas.getContext('2d');
