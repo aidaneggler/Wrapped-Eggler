@@ -37,3 +37,5 @@ Genre analysis is weird I am not too sure what I want it to do. Might just scrap
 Cleaned up the dashboard html. Still want to change the overall look of it in general but thats a later problem. 
 Now onto working on a new and better genre analysis.
 Change it from all time ot 12 months i think (look into this)
+
+Okay got something cool for genres but the logic is just messed up. Dont need it to actually try to estimate the amount of minutes. Change this later.
