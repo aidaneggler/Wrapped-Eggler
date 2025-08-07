@@ -21,25 +21,48 @@
         <a href="{% url 'logout' %}"
             class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition">Logout</a>
     </nav>
+
     <div class="container mx-auto p-8">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-4xl font-bold">Your Top 10 Tracks</h2>
-            <!-- Time Frame Selector -->
+        <div class="flex justify-between items-center mb-8 flex-col md:flex-row gap-4">
+            <h2 class="text-4xl font-bold">
+                Your Top 10 Tracks
+                <span class="text-2xl text-gray-400 font-normal ml-2">
+                    {% if active_time_range == 'short_term' %}
+                    (Last 4 Weeks)
+                    {% elif active_time_range == 'medium_term' %}
+                    (Last 6 Months)
+                    {% elif active_time_range == 'long_term' %}
+                    (All Time)
+                    {% else %}
+                    (Time Range Unknown)
+                    {% endif %}
+                </span>
+            </h2>
+
+            <!-- Time Frame Selector with highlighting -->
             <div class="flex space-x-2 bg-gray-800 p-1 rounded-full">
                 <a href="{% url 'top_tracks' 'short_term' %}"
-                    class="px-4 py-2 rounded-full text-sm font-semibold transition {% if active_time_range == 'short_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">4
-                    Weeks</a>
+                    class="px-4 py-2 rounded-full text-sm font-semibold transition
+                   {% if active_time_range == 'short_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">
+                    4 Weeks
+                </a>
                 <a href="{% url 'top_tracks' 'medium_term' %}"
-                    class="px-4 py-2 rounded-full text-sm font-semibold transition {% if active_time_range == 'medium_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">6
-                    Months</a>
+                    class="px-4 py-2 rounded-full text-sm font-semibold transition
+                   {% if active_time_range == 'medium_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">
+                    6 Months
+                </a>
                 <a href="{% url 'top_tracks' 'long_term' %}"
-                    class="px-4 py-2 rounded-full text-sm font-semibold transition {% if active_time_range == 'long_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">All
-                    Time</a>
+                    class="px-4 py-2 rounded-full text-sm font-semibold transition
+                   {% if active_time_range == 'long_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">
+                    All Time
+                </a>
             </div>
         </div>
+
         <div class="space-y-4">
             {% for track in top_tracks %}
             <div class="bg-gray-800 rounded-lg p-4 flex items-center">
+                <span class="text-3xl font-bold text-gray-400 w-10 text-right mr-6">{{ forloop.counter }}.</span>
                 <img src="{{ track.album.images.0.url }}" alt="{{ track.name }}"
                     class="w-24 h-24 rounded-lg mr-6 object-cover">
                 <div>

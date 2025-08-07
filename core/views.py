@@ -91,7 +91,22 @@ def top_artists_view(request):
     context = {'top_artists': top_artists['items']}
     return render(request, 'spotify_wrapped_app/top_artists.html', context)
 
-def top_tracks_view(request, time_range='medium term'):
+def top_artists_view(request, time_range='medium_term'):
+    sp = get_spotify_client(request)
+    if not sp:
+        return redirect('login')
+
+    valid_time_ranges = ['short_term', 'medium_term', 'long_term']
+    if time_range not in valid_time_ranges:
+        time_range = 'medium term'
+
+    top_artists = sp.current_user_top_artists(limit=50, time_range=time_range)
+    context = {
+        'top_artists': top_artists['items'],
+        'active_time_range': time_range}
+    return render(request, 'spotify_wrapped_app/top_artists.html', context)
+
+def top_tracks_view(request, time_range='medium_term'):
     """Fetches and displays the user's top 10 tracks."""
     sp = get_spotify_client(request)
     if not sp:
@@ -101,75 +116,35 @@ def top_tracks_view(request, time_range='medium term'):
     if time_range not in valid_time_ranges:
         time_range = 'medium term'
     
-    top_tracks = sp.current_user_top_tracks(limit=10, time_range=time_range)
+    top_tracks = sp.current_user_top_tracks(limit=50, time_range=time_range)
     context = {
         'top_tracks': top_tracks['items'],
-        'activate_time_range': time_range}
+        'active_time_range': time_range}
     return render(request, 'spotify_wrapped_app/top_tracks.html', context)
 
-def top_genres_view(request):
-    """
-    Analyzes and displays the user's top genres based on listening time
-    from their top 50 tracks.
-    """
+def top_genres_view(request, time_range='medium_term'):
     sp = get_spotify_client(request)
     if not sp:
         return redirect('login')
 
-    top_tracks = sp.current_user_top_tracks(limit=50, time_range='medium_term')['items']
-    if not top_tracks:
-        context = {'genre_labels': [], 'genre_data': []}
-        return render(request, 'spotify_wrapped_app/top_genres.html', context)
+    valid_time_ranges = ['short_term', 'medium_term', 'long_term']
+    if time_range not in valid_time_ranges:
+        time_range = 'medium_term'
 
-    artist_ids = list({artist['id'] for track in top_tracks for artist in track['artists']})
-    
-    # FIX: Chunk artist IDs into groups of 50 to respect API limits
-    artist_chunks = [artist_ids[i:i + 50] for i in range(0, len(artist_ids), 50)]
-    
-    artists_details = []
-    for chunk in artist_chunks:
-        artists_details.extend(sp.artists(chunk)['artists'])
-    
-    artist_genre_map = {artist['id']: artist['genres'] for artist in artists_details}
-    
-    genre_durations = defaultdict(float)
-    for track in top_tracks:
-        duration_minutes = track['duration_ms'] / 60000
-        for artist in track['artists']:
-            for genre in artist_genre_map.get(artist['id'], []):
-                genre_durations[genre] += duration_minutes
+    top_artists = sp.current_user_top_artists(limit=50, time_range=time_range)
+    genre_counter = Counter()
+    for artist in top_artists['items']:
+        genre_counter.update(artist.get('genres', []))
 
-    sorted_genres = sorted(genre_durations.items(), key=lambda item: item[1], reverse=True)[:10]
-
-    genre_labels = [genre.capitalize() for genre, duration in sorted_genres]
-    genre_data = [round(duration) for genre, duration in sorted_genres]
+    top_genres = genre_counter.most_common(10)
+    labels = [genre for genre, _ in top_genres]
+    data = [count for _, count in top_genres]
 
     context = {
-        'genre_labels': genre_labels,
-        'genre_data': genre_data,
+        'genre_labels': labels,
+        'genre_data': data,
+        'active_time_range': time_range
     }
     return render(request, 'spotify_wrapped_app/top_genres.html', context)
 
-def audio_vibe_view(request):
-    """Analyzes and displays the audio features of the user's top tracks."""
-    sp = get_spotify_client(request)
-    if not sp:
-        return redirect('login')
 
-    top_tracks = sp.current_user_top_tracks(limit=20, time_range='medium_term')
-    track_ids = [track['id'] for track in top_tracks['items']]
-    
-    audio_features = sp.audio_features(track_ids)
-    df = pd.DataFrame(audio_features)
-    
-    # Calculate averages and format for Chart.js
-    vibe_analysis = {
-        'danceability': round(df['danceability'].mean() * 100),
-        'energy': round(df['energy'].mean() * 100),
-        'valence': round(df['valence'].mean() * 100),
-        'acousticness': round(df['acousticness'].mean() * 100),
-        'speechiness': round(df['speechiness'].mean() * 100),
-    }
-
-    context = {'vibe_analysis': vibe_analysis}
-    return render(request, 'spotify_wrapped_app/audio_vibe.html', context)

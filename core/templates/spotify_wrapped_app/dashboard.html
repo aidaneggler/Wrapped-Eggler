@@ -21,32 +21,27 @@
             class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition duration-300">Logout</a>
     </nav>
     <div class="container mx-auto p-8">
-        <h2 class="text-3xl font-bold mb-2">Welcome to Your Spotify Wrapped</h2>
-        <p class="text-lg text-gray-400 mb-8">Choose a category below to explore your listening habits.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <h2 class="text-3xl font-bold mb-6">Spotify Analytics</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
             <!-- Top Artists Card -->
             <a href="{% url 'top_artists' %}"
-                class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition duration-300 transform hover:-translate-y-1">
+                class="bg-gray-800 p-8 rounded-lg hover:bg-gray-700 transition duration-300 transform hover:-translate-y-1">
                 <h3 class="text-xl font-bold mb-2">Top Artists</h3>
-                <p class="text-gray-400">See your most-played artists.</p>
+                <p class="text-gray-400">See your top 50 artists over multiple time frames.</p>
             </a>
             <!-- Top Tracks Card -->
             <a href="{% url 'top_tracks' 'medium_term' %}"
-                class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition duration-300 transform hover:-translate-y-1">
+                class="bg-gray-800 p-8 rounded-lg hover:bg-gray-700 transition duration-300 transform hover:-translate-y-1">
                 <h3 class="text-xl font-bold mb-2">Top Tracks</h3>
-                <p class="text-gray-400">Rediscover your favorite songs.</p>
+                <p class="text-gray-400">See your top 50 songs over multiple time frames.</p>
             </a>
             <!-- Top Genres Card -->
             <a href="{% url 'top_genres' %}"
-                class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition duration-300 transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold mb-2">Top Genres</h3>
-                <p class="text-gray-400">Find out what genres define your taste.</p>
+                class="bg-gray-800 p-8 rounded-lg hover:bg-gray-700 transition duration-300 transform hover:-translate-y-1">
+                <h3 class="text-xl font-bold mb-2">Top Genres(not working)</h3>
+                <p class="text-gray-400">Find out your favorite genres and how they have changed over time.</p>
             </a>
-            <!-- Audio Vibe Card -->
-            <a href="{% url 'audio_vibe' %}"
-                class="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition duration-300 transform hover:-translate-y-1">
-                <h3 class="text-xl font-bold mb-2">Audio Vibe</h3>
-                <p class="text-gray-400">Analyze the mood of your music.</p>
             </a>
         </div>
     </div>
