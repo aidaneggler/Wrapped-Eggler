@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Top Genres</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <nav class="bg-gray-800/50 backdrop-blur-sm p-4 sticky top-0 z-10 flex justify-between items-center">
+        <a href="{% url 'dashboard' %}" class="text-2xl font-bold hover:text-green-400 transition">&larr; Back to
+            Dashboard</a>
+        <a href="{% url 'logout' %}"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition">Logout</a>
+    </nav>
+
+    <main class="container mx-auto px-4 py-10 flex-grow">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold text-center mb-6">Your Top Genres by Listening Time</h1>
+
+            <div class="flex justify-center space-x-4 mb-6 text-sm text-gray-300">
+                <a href="{% url 'top_genres' 'short_term' %}"
+                    class="{% if active_time_range == 'short_term' %}text-green-400 font-semibold{% endif %} hover:underline">Last
+                    4 Weeks</a>
+                <a href="{% url 'top_genres' 'medium_term' %}"
+                    class="{% if active_time_range == 'medium_term' %}text-green-400 font-semibold{% endif %} hover:underline">Last
+                    6 Months</a>
+                <a href="{% url 'top_genres' 'long_term' %}"
+                    class="{% if active_time_range == 'long_term' %}text-green-400 font-semibold{% endif %} hover:underline">Last
+                    12 Months</a>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                {% if genre_labels and genre_data %}
+                <canvas id="genresChart" class="w-full max-w-lg mx-auto"></canvas>
+                {% else %}
+                <p class="text-center text-gray-400">Could not determine your top genres.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <!-- Pass data to JavaScript securely -->
+    {{ genre_labels|json_script:"genre-labels" }}
+    {{ genre_data|json_script:"genre-data" }}
+
+    <!-- External JS that renders the Chart -->
+    <script src="{% static 'core/js/genres_chart.js' %}"></script>
+</body>
+
+</html>

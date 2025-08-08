@@ -1,0 +1,4 @@
+django
+spotipy
+pandas
+python-dotenv

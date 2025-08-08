@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Django
+db.sqlite3
+/media
+/static
+*.log
+*.pot
+*.mo
+local_settings.py
+
+# Environment Variables
+.env
+
+# Operating System Files
+.DS_Store
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+#Spotipy Cache
+.cache*
+
+# Build artifacts
+dist/
+build/
+*.egg

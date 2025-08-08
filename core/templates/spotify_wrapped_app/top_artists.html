@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Artists</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white">
+    <nav class="bg-gray-800/50 backdrop-blur-sm p-4 sticky top-0 z-10 flex justify-between items-center">
+        <a href="{% url 'dashboard' %}" class="text-2xl font-bold hover:text-green-400 transition">&larr; Back to
+            Dashboard</a>
+        <a href="{% url 'logout' %}"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition">Logout</a>
+    </nav>
+
+    <div class="container mx-auto p-8">
+        <div class="flex justify-between items-center mb-8 flex-col md:flex-row gap-4">
+            <h2 class="text-4xl font-bold">Your Top 10 Artists</h2>
+            <!-- Time Frame Selector -->
+            <div class="flex space-x-2 bg-gray-800 p-1 rounded-full">
+                <a href="{% url 'top_artists' 'short_term' %}"
+                    class="px-4 py-2 rounded-full text-sm font-semibold transition {% if active_time_range == 'short_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">4
+                    Weeks</a>
+                <a href="{% url 'top_artists' 'medium_term' %}"
+                    class="px-4 py-2 rounded-full text-sm font-semibold transition {% if active_time_range == 'medium_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">6
+                    Months</a>
+                <a href="{% url 'top_artists' 'long_term' %}"
+                    class="px-4 py-2 rounded-full text-sm font-semibold transition {% if active_time_range == 'long_term' %}bg-green-500 text-white{% else %}text-gray-300 hover:bg-gray-700{% endif %}">All
+                    Time</a>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            {% for artist in top_artists %}
+            <div class="bg-gray-800 rounded-lg p-4 flex items-center">
+                <span class="text-3xl font-bold text-gray-400 w-10 text-right mr-6">{{ forloop.counter }}.</span>
+                <img src="{{ artist.images.0.url }}" alt="{{ artist.name }}"
+                    class="w-24 h-24 rounded-full mr-6 object-cover">
+                <div>
+                    <h3 class="text-2xl font-bold">{{ artist.name }}</h3>
+                    <p class="text-gray-400 capitalize">{{ artist.genres|slice:":2"|join:", " }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p>Could not find your top artists for this time range.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+
+</html>
